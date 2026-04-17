@@ -1,0 +1,375 @@
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen',
+    'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue',
+    sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+.app {
+  width: 100vw;
+  height: 100vh;
+  overflow: hidden;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  position: relative;
+}
+
+.toolbar {
+  background: rgba(255, 255, 255, 0.95);
+  backdrop-filter: blur(10px);
+  padding: 15px 25px;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+  display: flex;
+  align-items: center;
+  gap: 20px;
+  flex-wrap: wrap;
+}
+
+.toolbar h1 {
+  margin: 0;
+  font-size: 24px;
+  color: #333;
+}
+
+.controls {
+  display: flex;
+  align-items: center;
+  gap: 20px;
+  flex-wrap: wrap;
+  flex: 1;
+}
+
+.color-picker {
+  display: flex;
+  gap: 8px;
+}
+
+.color-btn {
+  width: 30px;
+  height: 30px;
+  border: 3px solid transparent;
+  border-radius: 50%;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.color-btn:hover {
+  transform: scale(1.1);
+}
+
+.color-btn.selected {
+  border-color: #333;
+  box-shadow: 0 0 0 2px white, 0 0 0 4px #333;
+}
+
+.color-btn.yellow {
+  background: #ffd93d;
+}
+
+.color-btn.pink {
+  background: #ff9acd;
+}
+
+.color-btn.blue {
+  background: #6bcfff;
+}
+
+.color-btn.green {
+  background: #95e1d3;
+}
+
+.color-btn.purple {
+  background: #c5a8ff;
+}
+
+.color-btn.orange {
+  background: #ffb380;
+}
+
+.add-btn {
+  padding: 10px 20px;
+  background: #667eea;
+  color: white;
+  border: none;
+  border-radius: 8px;
+  font-size: 16px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.add-btn:hover {
+  background: #5568d3;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
+}
+
+.stats {
+  display: flex;
+  gap: 15px;
+  font-size: 14px;
+  color: #666;
+  font-weight: 500;
+}
+
+.file-actions {
+  display: flex;
+  gap: 10px;
+  margin-left: auto;
+}
+
+.file-actions button,
+.import-btn {
+  padding: 8px 15px;
+  background: white;
+  color: #333;
+  border: 2px solid #ddd;
+  border-radius: 6px;
+  font-size: 14px;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.file-actions button:hover,
+.import-btn:hover {
+  border-color: #667eea;
+  color: #667eea;
+}
+
+.file-actions button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.import-btn {
+  display: inline-block;
+  cursor: pointer;
+}
+
+.notes-container {
+  width: 100%;
+  height: calc(100vh - 80px);
+  position: relative;
+}
+
+.sticky-note {
+  position: absolute;
+  width: 220px;
+  min-height: 220px;
+  padding: 15px;
+  border-radius: 3px;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
+  cursor: move;
+  transition: transform 0.1s, box-shadow 0.2s;
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+}
+
+.sticky-note:hover {
+  box-shadow: 0 8px 16px rgba(0, 0, 0, 0.2);
+}
+
+.sticky-note.dragging {
+  transform: rotate(2deg) scale(1.05);
+  box-shadow: 0 12px 24px rgba(0, 0, 0, 0.3);
+  z-index: 1000;
+}
+
+.sticky-note.yellow {
+  background: linear-gradient(135deg, #ffd93d 0%, #ffed4e 100%);
+}
+
+.sticky-note.pink {
+  background: linear-gradient(135deg, #ff9acd 0%, #ffb3d9 100%);
+}
+
+.sticky-note.blue {
+  background: linear-gradient(135deg, #6bcfff 0%, #8ddcff 100%);
+}
+
+.sticky-note.green {
+  background: linear-gradient(135deg, #95e1d3 0%, #aaf0e4 100%);
+}
+
+.sticky-note.purple {
+  background: linear-gradient(135deg, #c5a8ff 0%, #d4bbff 100%);
+}
+
+.sticky-note.orange {
+  background: linear-gradient(135deg, #ffb380 0%, #ffc599 100%);
+}
+
+.sticky-note.completed {
+  opacity: 0.7;
+}
+
+.sticky-note.completed .note-content {
+  text-decoration: line-through;
+  color: #666;
+}
+
+.note-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 10px;
+}
+
+.note-header input[type='checkbox'] {
+  width: 18px;
+  height: 18px;
+  cursor: pointer;
+}
+
+.delete-btn {
+  background: rgba(0, 0, 0, 0.1);
+  border: none;
+  border-radius: 50%;
+  width: 24px;
+  height: 24px;
+  font-size: 14px;
+  cursor: pointer;
+  color: #333;
+  transition: all 0.2s;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.delete-btn:hover {
+  background: rgba(255, 0, 0, 0.6);
+  color: white;
+  transform: scale(1.1);
+}
+
+.note-content {
+  min-height: 160px;
+  padding: 10px;
+  font-size: 14px;
+  line-height: 1.6;
+  color: #333;
+  word-wrap: break-word;
+  white-space: pre-wrap;
+  cursor: pointer;
+  border-radius: 3px;
+  transition: background 0.2s;
+}
+
+.note-content:hover {
+  background: rgba(255, 255, 255, 0.3);
+}
+
+.note-edit textarea {
+  width: 100%;
+  height: 160px;
+  padding: 10px;
+  border: 2px solid rgba(0, 0, 0, 0.2);
+  border-radius: 4px;
+  font-size: 14px;
+  font-family: inherit;
+  resize: none;
+  background: rgba(255, 255, 255, 0.5);
+  color: #333;
+}
+
+.note-edit textarea:focus {
+  outline: none;
+  border-color: #667eea;
+  background: rgba(255, 255, 255, 0.8);
+}
+
+.edit-actions {
+  display: flex;
+  gap: 8px;
+  margin-top: 10px;
+}
+
+.edit-actions button {
+  flex: 1;
+  padding: 8px;
+  border: none;
+  border-radius: 4px;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.edit-actions button:first-child {
+  background: #667eea;
+  color: white;
+}
+
+.edit-actions button:first-child:hover {
+  background: #5568d3;
+}
+
+.edit-actions button:last-child {
+  background: rgba(0, 0, 0, 0.1);
+  color: #333;
+}
+
+.edit-actions button:last-child:hover {
+  background: rgba(0, 0, 0, 0.2);
+}
+
+.empty-state {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  text-align: center;
+  color: white;
+  font-size: 18px;
+}
+
+.empty-state h2 {
+  font-size: 32px;
+  margin: 0 0 10px 0;
+}
+
+.empty-state p {
+  margin: 0;
+  opacity: 0.8;
+}
+
+@media (max-width: 768px) {
+  .toolbar {
+    padding: 10px 15px;
+  }
+
+  .toolbar h1 {
+    font-size: 20px;
+    width: 100%;
+  }
+
+  .controls {
+    gap: 10px;
+  }
+
+  .stats {
+    order: 1;
+    width: 100%;
+  }
+
+  .file-actions {
+    margin-left: 0;
+    width: 100%;
+    order: 2;
+  }
+
+  .sticky-note {
+    width: 180px;
+    min-height: 180px;
+    padding: 12px;
+  }
+
+  .note-content {
+    min-height: 120px;
+    font-size: 13px;
+  }
+}
