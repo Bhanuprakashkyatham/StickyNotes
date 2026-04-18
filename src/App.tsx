@@ -1,18 +1,29 @@
 import { useState } from 'react';
 import { StickyNote } from './components/StickyNote';
-import { useLocalStorage } from './hooks/useLocalStorage';
+import { Auth } from './components/Auth';
+import { useAuth } from './contexts/AuthContext';
+import { useFirestore } from './hooks/useFirestore';
 import type { Note, NoteColor } from './types';
 import './App.css';
 
 const COLORS: NoteColor[] = ['yellow', 'pink', 'blue', 'green', 'purple', 'orange'];
 
 function App() {
-  const [notes, setNotes] = useLocalStorage<Note[]>('sticky-notes', []);
+  // Get current user from auth context
+  const { currentUser, logout } = useAuth();
+
+  // Use Firestore instead of localStorage
+  const { notes, loading, addNote: addNoteToFirestore, updateNote: updateNoteInFirestore, deleteNote: deleteNoteFromFirestore } = useFirestore(currentUser?.uid);
+
   const [selectedColor, setSelectedColor] = useState<NoteColor>('yellow');
 
-  const addNote = () => {
-    const newNote: Note = {
-      id: Date.now().toString(),
+  // Show login page if not authenticated
+  if (!currentUser) {
+    return <Auth />;
+  }
+
+  const addNote = async () => {
+    const newNote = {
       content: '',
       color: selectedColor,
       completed: false,
@@ -22,35 +33,52 @@ function App() {
       },
       createdAt: Date.now(),
       updatedAt: Date.now(),
+      userId: currentUser.uid
     };
-    setNotes([...notes, newNote]);
-  };
 
-  const updateNote = (id: string, updates: Partial<Note>) => {
-    setNotes(
-      notes.map((note) =>
-        note.id === id ? { ...note, ...updates, updatedAt: Date.now() } : note
-      )
-    );
-  };
-
-  const deleteNote = (id: string) => {
-    if (confirm('Delete this note?')) {
-      setNotes(notes.filter((note) => note.id !== id));
+    try {
+      await addNoteToFirestore(newNote);
+    } catch (error) {
+      console.error('Failed to add note:', error);
+      alert('Failed to add note. Please try again.');
     }
   };
 
-  const toggleComplete = (id: string) => {
-    setNotes(
-      notes.map((note) =>
-        note.id === id ? { ...note, completed: !note.completed, updatedAt: Date.now() } : note
-      )
-    );
+  const updateNote = async (id: string, updates: Partial<Note>) => {
+    try {
+      await updateNoteInFirestore(id, updates);
+    } catch (error) {
+      console.error('Failed to update note:', error);
+    }
   };
 
-  const clearCompleted = () => {
+  const deleteNote = async (id: string) => {
+    if (confirm('Delete this note?')) {
+      try {
+        await deleteNoteFromFirestore(id);
+      } catch (error) {
+        console.error('Failed to delete note:', error);
+        alert('Failed to delete note. Please try again.');
+      }
+    }
+  };
+
+  const toggleComplete = async (id: string) => {
+    const note = notes.find(n => n.id === id);
+    if (note) {
+      await updateNote(id, { completed: !note.completed });
+    }
+  };
+
+  const clearCompleted = async () => {
     if (confirm('Delete all completed notes?')) {
-      setNotes(notes.filter((note) => !note.completed));
+      const completedNotes = notes.filter((note) => note.completed);
+      try {
+        await Promise.all(completedNotes.map(note => deleteNoteFromFirestore(note.id)));
+      } catch (error) {
+        console.error('Failed to clear completed notes:', error);
+        alert('Failed to clear some notes. Please try again.');
+      }
     }
   };
 
@@ -65,24 +93,13 @@ function App() {
     URL.revokeObjectURL(url);
   };
 
-  const importNotes = (event: React.ChangeEvent<HTMLInputElement>) => {
-    const file = event.target.files?.[0];
-    if (!file) return;
-
-    const reader = new FileReader();
-    reader.onload = (e) => {
-      try {
-        const imported = JSON.parse(e.target?.result as string);
-        if (Array.isArray(imported)) {
-          setNotes(imported);
-          alert('Notes imported successfully!');
-        }
-      } catch (error) {
-        alert('Invalid file format');
-      }
-    };
-    reader.readAsText(file);
-    event.target.value = '';
+  const handleLogout = async () => {
+    try {
+      await logout();
+    } catch (error) {
+      console.error('Failed to logout:', error);
+      alert('Failed to logout. Please try again.');
+    }
   };
 
   const stats = {
@@ -90,6 +107,16 @@ function App() {
     completed: notes.filter((n) => n.completed).length,
     active: notes.filter((n) => !n.completed).length,
   };
+
+  if (loading) {
+    return (
+      <div className="app">
+        <div className="loading-state">
+          <h2>Loading your notes...</h2>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="app">
@@ -122,17 +149,15 @@ function App() {
             <button onClick={exportNotes} disabled={notes.length === 0}>
               💾 Export
             </button>
-            <label className="import-btn">
-              📂 Import
-              <input
-                type="file"
-                accept=".json"
-                onChange={importNotes}
-                style={{ display: 'none' }}
-              />
-            </label>
             <button onClick={clearCompleted} disabled={stats.completed === 0}>
               🗑️ Clear Done
+            </button>
+          </div>
+
+          <div className="user-info">
+            <span className="user-email">{currentUser.email}</span>
+            <button className="logout-btn" onClick={handleLogout}>
+              Logout
             </button>
           </div>
         </div>

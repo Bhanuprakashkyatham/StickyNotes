@@ -21,7 +21,16 @@ export const StickyNote: React.FC<StickyNoteProps> = ({
   const noteRef = useRef<HTMLDivElement>(null);
 
   const handleMouseDown = (e: React.MouseEvent) => {
-    if ((e.target as HTMLElement).tagName === 'TEXTAREA' || (e.target as HTMLElement).tagName === 'BUTTON') {
+    const target = e.target as HTMLElement;
+
+    // Don't drag if clicking on interactive elements
+    if (
+      target.tagName === 'TEXTAREA' ||
+      target.tagName === 'BUTTON' ||
+      target.tagName === 'INPUT' ||
+      target.closest('.note-content') ||  // Don't drag when clicking content area
+      target.closest('.note-edit')        // Don't drag in edit mode
+    ) {
       return;
     }
 

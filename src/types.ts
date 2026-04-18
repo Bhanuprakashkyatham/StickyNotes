@@ -6,6 +6,7 @@ export type Note = {
   position: { x: number; y: number };
   createdAt: number;
   updatedAt: number;
+  userId?: string; // ID of the user who owns this note
 };
 
 export type NoteColor = 'yellow' | 'pink' | 'blue' | 'green' | 'purple' | 'orange';
