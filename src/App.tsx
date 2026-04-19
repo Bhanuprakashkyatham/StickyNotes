@@ -88,18 +88,6 @@ function App() {
     }
   };
 
-  const clearCompleted = async () => {
-    if (confirm('Delete all completed notes?')) {
-      const completedNotes = notes.filter((note) => note.completed);
-      try {
-        await Promise.all(completedNotes.map(note => deleteNoteFromFirestore(note.id)));
-      } catch (error) {
-        console.error('Failed to clear completed notes:', error);
-        alert('Failed to clear some notes. Please try again.');
-      }
-    }
-  };
-
   const exportNotes = () => {
     const dataStr = JSON.stringify(notes, null, 2);
     const dataBlob = new Blob([dataStr], { type: 'application/json' });
