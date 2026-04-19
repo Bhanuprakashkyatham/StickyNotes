@@ -1,8 +1,12 @@
-import React, { useState, useRef, useEffect } from 'react';
-import type { Note } from '../types';
+import React, { useState } from 'react';
+import type { Note, NotePriority } from '../types';
 
 interface StickyNoteProps {
   note: Note;
+  index: number;
+  isEditing: boolean;
+  onEdit: () => void;
+  onCancelEdit: () => void;
   onUpdate: (id: string, updates: Partial<Note>) => void;
   onDelete: (id: string) => void;
   onToggleComplete: (id: string) => void;
@@ -10,87 +14,66 @@ interface StickyNoteProps {
 
 export const StickyNote: React.FC<StickyNoteProps> = ({
   note,
+  index,
+  isEditing,
+  onEdit,
+  onCancelEdit,
   onUpdate,
   onDelete,
   onToggleComplete,
 }) => {
-  const [isEditing, setIsEditing] = useState(false);
   const [content, setContent] = useState(note.content);
-  const [isDragging, setIsDragging] = useState(false);
-  const [dragOffset, setDragOffset] = useState({ x: 0, y: 0 });
-  const noteRef = useRef<HTMLDivElement>(null);
 
-  const handleMouseDown = (e: React.MouseEvent) => {
-    const target = e.target as HTMLElement;
+  // Format date for display
+  const formatDate = (timestamp: any) => {
+    if (!timestamp) return 'Just now';
 
-    // Don't drag if clicking on interactive elements
-    if (
-      target.tagName === 'TEXTAREA' ||
-      target.tagName === 'BUTTON' ||
-      target.tagName === 'INPUT' ||
-      target.closest('.note-content') ||  // Don't drag when clicking content area
-      target.closest('.note-edit')        // Don't drag in edit mode
-    ) {
-      return;
+    // Handle Firestore Timestamp object
+    let dateMs: number;
+    if (timestamp?.toDate) {
+      // Firestore Timestamp
+      dateMs = timestamp.toDate().getTime();
+    } else if (timestamp?.seconds) {
+      // Firestore Timestamp object format
+      dateMs = timestamp.seconds * 1000;
+    } else {
+      // Regular number timestamp
+      dateMs = timestamp;
     }
 
-    setIsDragging(true);
-    const rect = noteRef.current?.getBoundingClientRect();
-    if (rect) {
-      setDragOffset({
-        x: e.clientX - rect.left,
-        y: e.clientY - rect.top,
-      });
-    }
+    const date = new Date(dateMs);
+    if (isNaN(date.getTime())) return 'Just now';
+
+    const now = new Date();
+    const diffMs = now.getTime() - date.getTime();
+    const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24));
+
+    if (diffDays === 0) return 'Today';
+    if (diffDays === 1) return 'Yesterday';
+    if (diffDays < 7) return `${diffDays} days ago`;
+    return date.toLocaleDateString();
   };
-
-  useEffect(() => {
-    const handleMouseMove = (e: MouseEvent) => {
-      if (isDragging) {
-        onUpdate(note.id, {
-          position: {
-            x: e.clientX - dragOffset.x,
-            y: e.clientY - dragOffset.y,
-          },
-        });
-      }
-    };
-
-    const handleMouseUp = () => {
-      setIsDragging(false);
-    };
-
-    if (isDragging) {
-      document.addEventListener('mousemove', handleMouseMove);
-      document.addEventListener('mouseup', handleMouseUp);
-    }
-
-    return () => {
-      document.removeEventListener('mousemove', handleMouseMove);
-      document.removeEventListener('mouseup', handleMouseUp);
-    };
-  }, [isDragging, dragOffset, note.id, onUpdate]);
 
   const handleSave = () => {
     onUpdate(note.id, { content });
-    setIsEditing(false);
+    onCancelEdit();
   };
 
   const handleCancel = () => {
     setContent(note.content);
-    setIsEditing(false);
+    onCancelEdit();
+  };
+
+  const handlePriorityChange = (priority: NotePriority) => {
+    onUpdate(note.id, { priority });
   };
 
   return (
     <div
-      ref={noteRef}
-      className={`sticky-note ${note.color} ${note.completed ? 'completed' : ''} ${isDragging ? 'dragging' : ''}`}
-      style={{
-        left: `${note.position.x}px`,
-        top: `${note.position.y}px`,
-      }}
-      onMouseDown={handleMouseDown}
+      className={`sticky-note ${note.color} ${note.completed ? 'completed' : ''} ${isEditing ? 'editing' : ''} priority-${note.priority || 'normal'}`}
     >
+      <div className="note-number">#{index}</div>
+
       <div className="note-header">
         <input
           type="checkbox"
@@ -98,13 +81,42 @@ export const StickyNote: React.FC<StickyNoteProps> = ({
           onChange={() => onToggleComplete(note.id)}
           title={note.completed ? 'Mark as incomplete' : 'Mark as complete'}
         />
-        <button
-          className="delete-btn"
-          onClick={() => onDelete(note.id)}
-          title="Delete note"
+        <div className="note-actions">
+          {!isEditing && (
+            <>
+              <button
+                className="edit-btn"
+                onClick={onEdit}
+                title="Edit note"
+              >
+                ✏️
+              </button>
+              <button
+                className="delete-btn"
+                onClick={() => onDelete(note.id)}
+                title="Delete note"
+              >
+                🗑️
+              </button>
+            </>
+          )}
+        </div>
+      </div>
+
+      <div className="note-meta">
+        <span className="note-date" title={new Date(note.createdAt).toLocaleString()}>
+          📅 {formatDate(note.createdAt)}
+        </span>
+        <select
+          className="priority-select"
+          value={note.priority || 'normal'}
+          onChange={(e) => handlePriorityChange(e.target.value as NotePriority)}
+          title="Set priority"
         >
-          ✕
-        </button>
+          <option value="normal">⚪ Normal</option>
+          <option value="important">🟡 Important</option>
+          <option value="urgent">🔴 Urgent</option>
+        </select>
       </div>
 
       {isEditing ? (
@@ -121,12 +133,8 @@ export const StickyNote: React.FC<StickyNoteProps> = ({
           </div>
         </div>
       ) : (
-        <div
-          className="note-content"
-          onDoubleClick={() => setIsEditing(true)}
-          title="Double-click to edit"
-        >
-          {note.content || 'Double-click to edit...'}
+        <div className="note-content">
+          {note.content || 'Click edit to add content...'}
         </div>
       )}
     </div>

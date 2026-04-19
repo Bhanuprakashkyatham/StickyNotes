@@ -16,6 +16,8 @@ function App() {
   const { notes, loading, addNote: addNoteToFirestore, updateNote: updateNoteInFirestore, deleteNote: deleteNoteFromFirestore } = useFirestore(currentUser?.uid);
 
   const [selectedColor, setSelectedColor] = useState<NoteColor>('yellow');
+  const [showProfileMenu, setShowProfileMenu] = useState(false);
+  const [editingNoteId, setEditingNoteId] = useState<string | null>(null);
 
   // Show login page if not authenticated
   if (!currentUser) {
@@ -23,17 +25,33 @@ function App() {
   }
 
   const addNote = async () => {
+    // Calculate safe position that won't go off-screen
+    const noteWidth = 220;
+    const noteHeight = 280; // Increased for new meta section
+    const toolbar = 100; // Approximate toolbar height
+
+    const maxX = Math.max(50, window.innerWidth - noteWidth - 20);
+    const maxY = Math.max(toolbar + 20, window.innerHeight - noteHeight - 20);
+
+    // For mobile, stack notes vertically
+    const isMobile = window.innerWidth < 768;
+    const existingNotes = notes.length;
+
     const newNote = {
       content: '',
       color: selectedColor,
       completed: false,
-      position: {
-        x: Math.random() * (window.innerWidth - 250) + 50,
-        y: Math.random() * (window.innerHeight - 300) + 100,
+      position: isMobile ? {
+        x: 10,
+        y: toolbar + (existingNotes * 30) // Stack vertically on mobile
+      } : {
+        x: Math.min(Math.random() * maxX + 10, maxX),
+        y: Math.min(Math.random() * (maxY - toolbar) + toolbar, maxY),
       },
       createdAt: Date.now(),
       updatedAt: Date.now(),
-      userId: currentUser.uid
+      userId: currentUser.uid,
+      priority: 'normal' as const
     };
 
     try {
@@ -119,7 +137,12 @@ function App() {
   }
 
   return (
-    <div className="app">
+    <div className="app" onClick={(e) => {
+      // Close profile menu when clicking outside
+      if (!(e.target as HTMLElement).closest('.hamburger-menu')) {
+        setShowProfileMenu(false);
+      }
+    }}>
       <header className="toolbar">
         <h1>📝 Sticky Notes Tracker</h1>
 
@@ -149,25 +172,20 @@ function App() {
             <button onClick={exportNotes} disabled={notes.length === 0}>
               💾 Export
             </button>
-            <button onClick={clearCompleted} disabled={stats.completed === 0}>
-              🗑️ Clear Done
-            </button>
           </div>
 
-          <div className="user-info">
-            <span className="user-email">{currentUser.email}</span>
-            <button className="logout-btn" onClick={handleLogout}>
-              Logout
-            </button>
-          </div>
         </div>
       </header>
 
-      <div className="notes-container">
-        {notes.map((note) => (
+      <div className="notes-grid">
+        {notes.map((note, index) => (
           <StickyNote
             key={note.id}
             note={note}
+            index={index + 1}
+            isEditing={editingNoteId === note.id}
+            onEdit={() => setEditingNoteId(note.id)}
+            onCancelEdit={() => setEditingNoteId(null)}
             onUpdate={updateNote}
             onDelete={deleteNote}
             onToggleComplete={toggleComplete}
@@ -181,6 +199,32 @@ function App() {
           <p>Click "+ Add Note" to create your first sticky note</p>
         </div>
       )}
+
+      {/* Fixed hamburger menu */}
+      <div className="hamburger-menu">
+        <button
+          className="hamburger-btn"
+          onClick={() => setShowProfileMenu(!showProfileMenu)}
+          aria-label="Menu"
+        >
+          <span></span>
+          <span></span>
+          <span></span>
+        </button>
+        {showProfileMenu && (
+          <div className="hamburger-dropdown">
+            <div className="profile-info">
+              <div className="profile-avatar">
+                {currentUser.email?.[0].toUpperCase() || '👤'}
+              </div>
+              <div className="profile-email">{currentUser.email}</div>
+            </div>
+            <button className="logout-btn" onClick={handleLogout}>
+              Logout
+            </button>
+          </div>
+        )}
+      </div>
     </div>
   );
 }
