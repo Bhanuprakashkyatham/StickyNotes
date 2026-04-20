@@ -19,6 +19,10 @@ function App() {
   const [showProfileMenu, setShowProfileMenu] = useState(false);
   const [editingNoteId, setEditingNoteId] = useState<string | null>(null);
   const [filterTab, setFilterTab] = useState<'all' | 'ongoing' | 'completed'>('all');
+  const [showMobileToolbar, setShowMobileToolbar] = useState(false);
+  const [showMobilePopup, setShowMobilePopup] = useState(false);
+  const [popupContent, setPopupContent] = useState('');
+  const [sortBy, setSortBy] = useState<'id' | 'date' | 'priority'>('id');
 
   // Show login page if not authenticated
   if (!currentUser) {
@@ -127,12 +131,17 @@ function App() {
 
   return (
     <div className="app" onClick={(e) => {
-      // Close profile menu when clicking outside
+      // Close profile menu and mobile toolbar when clicking outside
       if (!(e.target as HTMLElement).closest('.hamburger-menu')) {
         setShowProfileMenu(false);
       }
+      if (!(e.target as HTMLElement).closest('.mobile-fab') &&
+          !(e.target as HTMLElement).closest('.toolbar') &&
+          !(e.target as HTMLElement).closest('.filter-tabs')) {
+        setShowMobileToolbar(false);
+      }
     }}>
-      <header className="toolbar">
+      <header className={`toolbar ${showMobileToolbar ? 'mobile-visible' : ''}`}>
         <h1>📝 Sticky Notes Tracker</h1>
 
         <div className="controls">
@@ -147,7 +156,10 @@ function App() {
             ))}
           </div>
 
-          <button className="add-btn" onClick={addNote}>
+          <button className="add-btn" onClick={() => {
+            addNote();
+            setShowMobileToolbar(false);
+          }}>
             + Add Note
           </button>
 
@@ -167,25 +179,40 @@ function App() {
       </header>
 
       {/* Filter Tabs */}
-      <div className="filter-tabs">
-        <button
-          className={`filter-tab ${filterTab === 'all' ? 'active' : ''}`}
-          onClick={() => setFilterTab('all')}
-        >
-          📋 All ({stats.total})
-        </button>
-        <button
-          className={`filter-tab ${filterTab === 'ongoing' ? 'active' : ''}`}
-          onClick={() => setFilterTab('ongoing')}
-        >
-          ⏳ Ongoing ({stats.active})
-        </button>
-        <button
-          className={`filter-tab ${filterTab === 'completed' ? 'active' : ''}`}
-          onClick={() => setFilterTab('completed')}
-        >
-          ✅ Completed ({stats.completed})
-        </button>
+      <div className={`filter-tabs ${showMobileToolbar ? 'mobile-visible' : ''}`}>
+        <div className="filter-buttons">
+          <button
+            className={`filter-tab ${filterTab === 'all' ? 'active' : ''}`}
+            onClick={() => setFilterTab('all')}
+          >
+            📋 All ({stats.total})
+          </button>
+          <button
+            className={`filter-tab ${filterTab === 'ongoing' ? 'active' : ''}`}
+            onClick={() => setFilterTab('ongoing')}
+          >
+            ⏳ Ongoing ({stats.active})
+          </button>
+          <button
+            className={`filter-tab ${filterTab === 'completed' ? 'active' : ''}`}
+            onClick={() => setFilterTab('completed')}
+          >
+            ✅ Completed ({stats.completed})
+          </button>
+        </div>
+
+        <div className="sort-dropdown">
+          <label htmlFor="sort-select">Sort by:</label>
+          <select
+            id="sort-select"
+            value={sortBy}
+            onChange={(e) => setSortBy(e.target.value as 'id' | 'date' | 'priority')}
+          >
+            <option value="id">Card Number</option>
+            <option value="date">Date (Newest First)</option>
+            <option value="priority">Priority</option>
+          </select>
+        </div>
       </div>
 
       <div className="notes-grid">
@@ -194,6 +221,16 @@ function App() {
             if (filterTab === 'ongoing') return !note.completed;
             if (filterTab === 'completed') return note.completed;
             return true;
+          })
+          .sort((a, b) => {
+            if (sortBy === 'date') {
+              return (b.createdAt || 0) - (a.createdAt || 0); // Newest first
+            } else if (sortBy === 'priority') {
+              const priorityOrder = { urgent: 0, important: 1, normal: 2 };
+              return priorityOrder[a.priority || 'normal'] - priorityOrder[b.priority || 'normal'];
+            }
+            // Default: sort by ID (original order)
+            return 0;
           })
           .map((note, index) => (
           <StickyNote
@@ -214,6 +251,96 @@ function App() {
         <div className="empty-state">
           <h2>No notes yet!</h2>
           <p>Click "+ Add Note" to create your first sticky note</p>
+        </div>
+      )}
+
+      {/* Mobile FAB */}
+      <button
+        className="mobile-fab"
+        onClick={() => {
+          setShowMobilePopup(true);
+          setPopupContent('');
+        }}
+        aria-label="Add Note"
+      >
+        <span>+</span>
+      </button>
+
+      {/* Mobile Add Note Popup */}
+      {showMobilePopup && (
+        <div className="mobile-popup-overlay" onClick={() => setShowMobilePopup(false)}>
+          <div className="mobile-popup" onClick={(e) => e.stopPropagation()}>
+            <div className="popup-header">
+              <h2>Create New Note</h2>
+              <button className="popup-close" onClick={() => setShowMobilePopup(false)}>
+                ✕
+              </button>
+            </div>
+
+            <div className="popup-color-picker">
+              <p>Choose Color:</p>
+              <div className="popup-colors">
+                {COLORS.map((color) => (
+                  <button
+                    key={color}
+                    className={`popup-color-btn ${color} ${selectedColor === color ? 'selected' : ''}`}
+                    onClick={() => setSelectedColor(color)}
+                    title={color}
+                  />
+                ))}
+              </div>
+            </div>
+
+            <div className="popup-preview">
+              <p>Preview:</p>
+              <div className={`preview-card ${selectedColor}`}>
+                <div className="preview-header">
+                  <span className="preview-badge">New Note</span>
+                </div>
+                <textarea
+                  className="preview-textarea"
+                  placeholder="Type your note here..."
+                  value={popupContent}
+                  onChange={(e) => setPopupContent(e.target.value)}
+                  rows={8}
+                />
+              </div>
+            </div>
+
+            <div className="popup-actions">
+              <button
+                className="popup-cancel"
+                onClick={() => setShowMobilePopup(false)}
+              >
+                Cancel
+              </button>
+              <button
+                className="popup-add"
+                onClick={async () => {
+                  const newNote = {
+                    content: popupContent,
+                    color: selectedColor,
+                    completed: false,
+                    position: { x: 10, y: 100 },
+                    createdAt: Date.now(),
+                    updatedAt: Date.now(),
+                    userId: currentUser.uid,
+                    priority: 'normal' as const
+                  };
+                  try {
+                    await addNoteToFirestore(newNote);
+                    setShowMobilePopup(false);
+                    setPopupContent('');
+                  } catch (error) {
+                    console.error('Failed to add note:', error);
+                    alert('Failed to add note. Please try again.');
+                  }
+                }}
+              >
+                Add Note
+              </button>
+            </div>
+          </div>
         </div>
       )}
 
