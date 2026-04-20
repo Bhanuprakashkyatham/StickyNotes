@@ -208,9 +208,9 @@ body {
 
 .sort-dropdown select {
   padding: 8px 12px;
-  background: rgba(255, 255, 255, 0.95);
+  background: white;
   color: #1a1a1a;
-  border: 2px solid rgba(255, 255, 255, 0.5);
+  border: 2px solid white;
   border-radius: 8px;
   font-size: 14px;
   font-weight: 600;
@@ -219,14 +219,19 @@ body {
 }
 
 .sort-dropdown select:hover {
-  background: white;
-  border-color: white;
+  background: #f9fafb;
+  border-color: #e5e7eb;
 }
 
 .sort-dropdown select:focus {
   outline: none;
   border-color: #667eea;
   box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.2);
+}
+
+.sort-dropdown select option {
+  color: #1a1a1a;
+  background: white;
 }
 
 .filter-tab {
