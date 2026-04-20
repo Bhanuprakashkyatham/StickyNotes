@@ -18,6 +18,7 @@ function App() {
   const [selectedColor, setSelectedColor] = useState<NoteColor>('yellow');
   const [showProfileMenu, setShowProfileMenu] = useState(false);
   const [editingNoteId, setEditingNoteId] = useState<string | null>(null);
+  const [filterTab, setFilterTab] = useState<'all' | 'ongoing' | 'completed'>('all');
 
   // Show login page if not authenticated
   if (!currentUser) {
@@ -165,8 +166,36 @@ function App() {
         </div>
       </header>
 
+      {/* Filter Tabs */}
+      <div className="filter-tabs">
+        <button
+          className={`filter-tab ${filterTab === 'all' ? 'active' : ''}`}
+          onClick={() => setFilterTab('all')}
+        >
+          📋 All ({stats.total})
+        </button>
+        <button
+          className={`filter-tab ${filterTab === 'ongoing' ? 'active' : ''}`}
+          onClick={() => setFilterTab('ongoing')}
+        >
+          ⏳ Ongoing ({stats.active})
+        </button>
+        <button
+          className={`filter-tab ${filterTab === 'completed' ? 'active' : ''}`}
+          onClick={() => setFilterTab('completed')}
+        >
+          ✅ Completed ({stats.completed})
+        </button>
+      </div>
+
       <div className="notes-grid">
-        {notes.map((note, index) => (
+        {notes
+          .filter(note => {
+            if (filterTab === 'ongoing') return !note.completed;
+            if (filterTab === 'completed') return note.completed;
+            return true;
+          })
+          .map((note, index) => (
           <StickyNote
             key={note.id}
             note={note}

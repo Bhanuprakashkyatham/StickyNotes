@@ -126,6 +126,7 @@ export const StickyNote: React.FC<StickyNoteProps> = ({
             onChange={(e) => setContent(e.target.value)}
             autoFocus
             rows={6}
+            placeholder="Add tasks (one per line)&#10;Use '- Task name' for checkable items"
           />
           <div className="edit-actions">
             <button onClick={handleSave}>Save</button>
@@ -134,7 +135,49 @@ export const StickyNote: React.FC<StickyNoteProps> = ({
         </div>
       ) : (
         <div className="note-content">
-          {note.content || 'Click edit to add content...'}
+          {note.content ? (
+            <ul className="task-list">
+              {note.content.split('\n').map((line, idx) => {
+                const trimmedLine = line.trim();
+                if (!trimmedLine) return null;
+
+                // Check if line has the `- ` prefix
+                const hasPrefix = trimmedLine.startsWith('- ');
+                const taskText = hasPrefix ? trimmedLine.substring(2) : trimmedLine;
+
+                // Check if completed (either `- [x] text` or just `[x] text`)
+                const isCompleted = taskText.startsWith('[x] ') || taskText.startsWith('[X] ');
+                const displayText = isCompleted ? taskText.substring(4) : taskText;
+
+                return (
+                  <li key={idx} className="task-item">
+                    <label className="task-label">
+                      <input
+                        type="checkbox"
+                        checked={isCompleted}
+                        onChange={() => {
+                          const lines = note.content.split('\n');
+                          if (isCompleted) {
+                            // Unchecking: remove [x] marker
+                            lines[idx] = hasPrefix ? `- ${displayText}` : displayText;
+                          } else {
+                            // Checking: add [x] marker
+                            lines[idx] = hasPrefix ? `- [x] ${displayText}` : `[x] ${displayText}`;
+                          }
+                          onUpdate(note.id, { content: lines.join('\n') });
+                        }}
+                      />
+                      <span className={isCompleted ? 'task-completed' : ''}>
+                        {displayText}
+                      </span>
+                    </label>
+                  </li>
+                );
+              })}
+            </ul>
+          ) : (
+            'Click edit to add content...'
+          )}
         </div>
       )}
     </div>
