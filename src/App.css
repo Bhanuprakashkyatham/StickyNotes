@@ -212,7 +212,7 @@ body {
 .sticky-note {
   position: relative;
   width: 100%;
-  min-height: 280px;
+  min-height: 200px;
   padding: 15px;
   border-radius: 12px;
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
@@ -222,6 +222,8 @@ body {
   transform: scale(1);
   animation: noteSlideIn 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
   animation-fill-mode: backwards;
+  display: flex;
+  flex-direction: column;
 }
 
 @keyframes noteSlideIn {
@@ -374,17 +376,19 @@ body {
 }
 
 .note-content {
-  min-height: 160px;
+  min-height: 100px;
   padding: 10px;
   font-size: 14px;
   line-height: 1.6;
   color: #333;
   word-wrap: break-word;
   white-space: pre-wrap;
-  cursor: text;  /* Changed from pointer to text */
+  cursor: text;
   border-radius: 3px;
   transition: background 0.2s;
-  user-select: text;  /* Allow text selection */
+  user-select: text;
+  overflow-wrap: break-word;
+  flex: 1;
 }
 
 .note-content:hover {
