@@ -177,8 +177,8 @@ body {
 }
 
 .notes-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+  display: flex;
+  flex-wrap: wrap;
   gap: 20px;
   padding: 20px;
   width: 100%;
@@ -187,6 +187,7 @@ body {
   overflow-x: hidden;
   -webkit-overflow-scrolling: touch;
   scroll-behavior: smooth;
+  align-content: flex-start;
 }
 
 /* Custom scrollbar styling for better UX */
@@ -211,7 +212,9 @@ body {
 
 .sticky-note {
   position: relative;
-  width: 100%;
+  width: calc((100% - 40px) / 3);
+  min-width: 250px;
+  max-width: 350px;
   min-height: 200px;
   padding: 15px;
   border-radius: 12px;
@@ -224,6 +227,8 @@ body {
   animation-fill-mode: backwards;
   display: flex;
   flex-direction: column;
+  flex-grow: 0;
+  flex-shrink: 0;
 }
 
 @keyframes noteSlideIn {
@@ -925,10 +930,82 @@ body {
     gap: 15px;
     padding: 15px 15px 100px 15px; /* Extra bottom padding for mobile */
     height: calc(100vh - 180px); /* Adjusted for mobile toolbar */
+    align-items: start;
+  }
+
+  .sticky-note {
+    width: 100% !important;
+    min-height: 150px;
+    max-width: 100%;
+    padding: 10px;
+  }
+
+  .note-number {
+    top: 8px;
+    left: 8px;
+    font-size: 10px;
+    padding: 3px 6px;
+  }
+
+  .note-header {
+    margin-bottom: 8px;
+  }
+
+  .note-header input[type='checkbox'] {
+    width: 16px;
+    height: 16px;
+  }
+
+  .note-actions {
+    gap: 4px;
+  }
+
+  .edit-btn,
+  .delete-btn {
+    width: 24px;
+    height: 24px;
+    font-size: 12px;
+  }
+
+  .note-meta {
+    margin-bottom: 6px;
+    padding: 4px 0;
+    font-size: 10px;
+  }
+
+  .note-date {
+    font-size: 9px;
+  }
+
+  .priority-select {
+    font-size: 10px;
+    padding: 2px 4px;
+  }
+
+  .note-content {
+    min-height: 80px;
+    padding: 8px;
+    font-size: 12px;
+    line-height: 1.5;
   }
 
   .sticky-note.editing {
     max-width: 95%;
-    transform: translate(-50%, -50%) scale(1.1);
+    transform: translate(-50%, -50%) scale(1.05);
+    padding: 15px;
+  }
+
+  .sticky-note.editing .note-content {
+    font-size: 14px;
+  }
+
+  .note-edit textarea {
+    height: 140px;
+    font-size: 13px;
+  }
+
+  .edit-actions button {
+    padding: 10px;
+    font-size: 14px;
   }
 }
