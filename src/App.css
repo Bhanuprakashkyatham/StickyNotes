@@ -101,12 +101,36 @@ body {
   font-weight: 600;
   cursor: pointer;
   transition: all 0.2s;
+  position: relative;
+  overflow: hidden;
+}
+
+.add-btn::before {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 0;
+  height: 0;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.3);
+  transform: translate(-50%, -50%);
+  transition: width 0.4s, height 0.4s;
+}
+
+.add-btn:hover::before {
+  width: 300px;
+  height: 300px;
 }
 
 .add-btn:hover {
   background: #5568d3;
   transform: translateY(-2px);
   box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
+}
+
+.add-btn:active {
+  transform: translateY(0);
 }
 
 .stats {
@@ -162,6 +186,27 @@ body {
   overflow-y: auto;
   overflow-x: hidden;
   -webkit-overflow-scrolling: touch;
+  scroll-behavior: smooth;
+}
+
+/* Custom scrollbar styling for better UX */
+.notes-grid::-webkit-scrollbar {
+  width: 10px;
+}
+
+.notes-grid::-webkit-scrollbar-track {
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 10px;
+}
+
+.notes-grid::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.3);
+  border-radius: 10px;
+  transition: background 0.2s;
+}
+
+.notes-grid::-webkit-scrollbar-thumb:hover {
+  background: rgba(255, 255, 255, 0.5);
 }
 
 .sticky-note {
@@ -175,11 +220,24 @@ body {
   transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
   font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
   transform: scale(1);
+  animation: noteSlideIn 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+  animation-fill-mode: backwards;
+}
+
+@keyframes noteSlideIn {
+  from {
+    opacity: 0;
+    transform: translateY(20px) scale(0.9);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
 }
 
 .sticky-note:hover {
   box-shadow: 0 8px 20px rgba(0, 0, 0, 0.15);
-  transform: scale(1.02);
+  transform: translateY(-4px) scale(1.02);
 }
 
 .sticky-note.editing {
@@ -275,9 +333,24 @@ body {
 }
 
 .note-header input[type='checkbox'] {
-  width: 18px;
-  height: 18px;
+  width: 20px;
+  height: 20px;
   cursor: pointer;
+  accent-color: #667eea;
+  transition: transform 0.2s;
+}
+
+.note-header input[type='checkbox']:hover {
+  transform: scale(1.15);
+}
+
+.note-header input[type='checkbox']:checked {
+  animation: checkBounce 0.3s ease;
+}
+
+@keyframes checkBounce {
+  0%, 100% { transform: scale(1); }
+  50% { transform: scale(1.2); }
 }
 
 .delete-btn {
@@ -846,7 +919,8 @@ body {
   .notes-grid {
     grid-template-columns: 1fr;
     gap: 15px;
-    padding: 15px;
+    padding: 15px 15px 100px 15px; /* Extra bottom padding for mobile */
+    height: calc(100vh - 180px); /* Adjusted for mobile toolbar */
   }
 
   .sticky-note.editing {
